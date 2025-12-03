@@ -1,0 +1,23 @@
+services:
+  database-service:
+    image: postgres:17.2
+    container_name: college-db-container
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=As-49510
+      - POSTGRES_DB=EndTerm
+    ports:
+      - "5432:5432"
+
+  backend-service:
+    build: .
+    image: college-backend-image
+    container_name: college-backend-container
+    depends_on:
+      - database-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://database-service:5432/EndTerm
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=As-49510
+    ports:
+      - "8080:8080"
