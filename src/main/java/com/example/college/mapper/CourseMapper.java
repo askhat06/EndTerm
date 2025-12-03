@@ -3,8 +3,10 @@ import com.example.college.dto.CourseDto;
 import com.example.college.model.Course;
 import com.example.college.model.Student;
 import org.springframework.stereotype.Component;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 public class CourseMapper {
@@ -15,15 +17,21 @@ public class CourseMapper {
         }
 
         CourseDto dto = new CourseDto();
+
         dto.setId(course.getId());
         dto.setCode(course.getCode());
         dto.setName(course.getName());
         dto.setDescription(course.getDescription());
 
-        if (course.getStudents() != null) {
-            Set<Long> studentIds = course.getStudents().stream()
-                    .map(Student::getId)
-                    .collect(Collectors.toSet());
+        if (course.getStudents() != null && !course.getStudents().isEmpty()) {
+            Set<Long> studentIds = new HashSet<>();
+
+            for (Student student : course.getStudents()) {
+                if (student != null && student.getId() != null) {
+                    studentIds.add(student.getId());
+                }
+            }
+
             dto.setStudentIds(studentIds);
         }
 
@@ -35,11 +43,13 @@ public class CourseMapper {
             return null;
         }
 
-        return Course.builder()
-                .code(dto.getCode())
-                .name(dto.getName())
-                .description(dto.getDescription())
-                .build();
+        Course course = new Course();
+
+        course.setCode(dto.getCode());
+        course.setName(dto.getName());
+        course.setDescription(dto.getDescription());
+
+        return course;
     }
 
     public void updateEntityFromDto(CourseDto dto, Course entity) {
@@ -49,5 +59,22 @@ public class CourseMapper {
         entity.setCode(dto.getCode());
         entity.setName(dto.getName());
         entity.setDescription(dto.getDescription());
+    }
+
+    public List<CourseDto> toDtoList(List<Course> courseList) {
+        List<CourseDto> result = new ArrayList<>();
+
+        if (courseList == null || courseList.isEmpty()) {
+            return result;
+        }
+
+        for (Course course : courseList) {
+            CourseDto dto = toDto(course);
+            if (dto != null) {
+                result.add(dto);
+            }
+        }
+
+        return result;
     }
 }

@@ -1,5 +1,4 @@
 package com.example.college.service.ServiceImpl;
-
 import com.example.college.dto.CourseDto;
 import com.example.college.mapper.CourseMapper;
 import com.example.college.model.Course;
@@ -9,11 +8,10 @@ import com.example.college.repository.StudentRepository;
 import com.example.college.service.CourseService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -34,17 +32,23 @@ public class CourseServiceImpl implements CourseService {
     @Override
     @Transactional(readOnly = true)
     public List<CourseDto> getAllCourses() {
-        return courseRepository.findAll().stream()
-                .map(courseMapper::toDto)
-                .collect(Collectors.toList());
+        List<Course> entityList = courseRepository.findAll();
+        List<CourseDto> dtoList = new ArrayList<>();
+
+        for (Course course : entityList) {
+            CourseDto dto = courseMapper.toDto(course);
+            if (dto != null) {
+                dtoList.add(dto);
+            }
+        }
+
+        return dtoList;
     }
 
     @Override
     @Transactional(readOnly = true)
     public CourseDto getCourseById(Long id) {
-        Course course = courseRepository.findById(id)
-                .orElse(null);
-
+        Course course = courseRepository.findById(id).orElse(null);
         return courseMapper.toDto(course);
     }
 
@@ -52,37 +56,44 @@ public class CourseServiceImpl implements CourseService {
     public CourseDto createCourse(CourseDto courseDto) {
         Course course = courseMapper.fromDtoForCreate(courseDto);
 
-        if (courseDto.getStudentIds() != null && !courseDto.getStudentIds().isEmpty()) {
+        if (courseDto != null && courseDto.getStudentIds() != null && !courseDto.getStudentIds().isEmpty()) {
             List<Student> students = studentRepository.findAllById(courseDto.getStudentIds());
-            course.setStudents(new HashSet<>(students));
+            Set<Student> studentSet = new HashSet<>(students);
+            course.setStudents(studentSet);
         }
 
         Course saved = courseRepository.save(course);
+
         return courseMapper.toDto(saved);
     }
 
     @Override
     public CourseDto updateCourse(Long id, CourseDto courseDto) {
-        Course existing = courseRepository.findById(id)
-                .orElse(null);
+        Course existing = courseRepository.findById(id).orElse(null);
+
+        if (existing == null) {
+            return null;
+        }
 
         courseMapper.updateEntityFromDto(courseDto, existing);
 
-        if (courseDto.getStudentIds() != null) {
+        if (courseDto != null && courseDto.getStudentIds() != null) {
             List<Student> students = studentRepository.findAllById(courseDto.getStudentIds());
             Set<Student> studentSet = new HashSet<>(students);
             existing.setStudents(studentSet);
         }
 
         Course updated = courseRepository.save(existing);
+
         return courseMapper.toDto(updated);
     }
 
     @Override
     public void deleteCourse(Long id) {
-        Course existing = courseRepository.findById(id)
-                .orElse(null);
+        Course existing = courseRepository.findById(id).orElse(null);
 
-        courseRepository.delete(existing);
+        if (existing != null) {
+            courseRepository.delete(existing);
+        }
     }
 }

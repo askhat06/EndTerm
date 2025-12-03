@@ -3,8 +3,10 @@ import com.example.college.dto.StudentDto;
 import com.example.college.model.Course;
 import com.example.college.model.Student;
 import org.springframework.stereotype.Component;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 public class StudentMapper {
@@ -20,10 +22,15 @@ public class StudentMapper {
         dto.setLastName(student.getLastName());
         dto.setEmail(student.getEmail());
 
-        if (student.getCourses() != null) {
-            Set<Long> courseIds = student.getCourses().stream()
-                    .map(Course::getId)
-                    .collect(Collectors.toSet());
+        if (student.getCourses() != null && !student.getCourses().isEmpty()) {
+            Set<Long> courseIds = new HashSet<>();
+
+            for (Course course : student.getCourses()) {
+                if (course != null && course.getId() != null) {
+                    courseIds.add(course.getId());
+                }
+            }
+
             dto.setCourseIds(courseIds);
         }
 
@@ -35,11 +42,13 @@ public class StudentMapper {
             return null;
         }
 
-        return Student.builder()
-                .firstName(dto.getFirstName())
-                .lastName(dto.getLastName())
-                .email(dto.getEmail())
-                .build();
+        Student student = new Student();
+
+        student.setFirstName(dto.getFirstName());
+        student.setLastName(dto.getLastName());
+        student.setEmail(dto.getEmail());
+
+        return student;
     }
 
     public void updateEntityFromDto(StudentDto dto, Student entity) {
@@ -49,5 +58,22 @@ public class StudentMapper {
         entity.setFirstName(dto.getFirstName());
         entity.setLastName(dto.getLastName());
         entity.setEmail(dto.getEmail());
+    }
+
+    public List<StudentDto> toDtoList(List<Student> studentList) {
+        List<StudentDto> result = new ArrayList<>();
+
+        if (studentList == null || studentList.isEmpty()) {
+            return result;
+        }
+
+        for (Student student : studentList) {
+            StudentDto dto = toDto(student);
+            if (dto != null) {
+                result.add(dto);
+            }
+        }
+
+        return result;
     }
 }
